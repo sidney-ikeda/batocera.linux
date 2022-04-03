@@ -142,7 +142,7 @@ class MameGenerator(Generator):
         commandArray += [ "-comment_directory",   "/userdata/saves/mame/comments/" ]
         commandArray += [ "-homepath" ,           "/userdata/saves/mame/plugins/" ]
         commandArray += [ "-ctrlrpath" ,          "/userdata/system/configs/mame/ctrlr/" ]
-        commandArray += [ "-inipath" ,            "/userdata/system/configs/mame/ini/" ]
+        commandArray += [ "-inipath" ,            "/userdata/system/configs/mame/;/userdata/system/configs/mame/ini/" ]
         commandArray += [ "-crosshairpath" ,      "/userdata/bios/mame/artwork/crosshairs/" ]
         if softList != "":
             commandArray += [ "-swpath" ,        softDir ]
@@ -210,10 +210,45 @@ class MameGenerator(Generator):
                 commandArray += [ romBasename ]
             else:
                 # Alternate system for machines that have different configs (ie computers with different hardware)
+                macModel = "maclc3"
                 if system.isOptSet("altmodel"):
                     commandArray += [ system.config["altmodel"] ]
+                    if system.name == "macintosh":
+                        macModel = system.config["altmodel"]
                 else:
                     commandArray += [ messSysName[messMode] ]
+
+                #TI-99 32k RAM expansion & speech modules - enabled by default
+                if system.name == "ti99":
+                    commandArray += [ "-ioport", "peb" ]
+                    if not system.isOptSet("ti99_32kram") or (system.isOptSet("ti99_32kram") and system.getOptBoolean("ti99_32kram")):
+                        commandArray += ["-ioport:peb:slot2", "32kmem"]
+                    if not system.isOptSet("ti99_speech") or (system.isOptSet("ti99_speech") and system.getOptBoolean("ti99_speech")):
+                        commandArray += ["-ioport:peb:slot3", "speech"]
+
+                # Mac RAM & Image Reader (if applicable)
+                if system.name == "macintosh":
+                    if system.isOptSet("ramsize"):
+                        ramSize = int(system.config["ramsize"])
+                        if macModel in [ 'maciix', 'maclc3' ]:
+                            if macModel == 'maclc3' and ramSize == 2:
+                                ramSize = 4
+                            if macModel == 'maclc3' and ramSize > 80:
+                                ramSize = 80
+                            if macModel == 'maciix' and ramSize == 16:
+                                ramSize = 32
+                            if macModel == 'maciix' and ramSize == 48:
+                                ramSize = 64
+                            commandArray += [ '-ramsize', str(ramSize) + 'M' ]
+                        if macModel == 'maciix':
+                            imageSlot = 'nba'
+                            if system.isOptSet('imagereader'):
+                                if system.config["imagereader"] == "disabled":
+                                    imageSlot = ''
+                                else:
+                                    imageSlot = system.config["imagereader"]
+                            if imageSlot != "":
+                                commandArray += [ "-" + imageSlot, 'image' ]
 
                 if softList == "":
                     # Boot disk for Macintosh
@@ -274,29 +309,27 @@ class MameGenerator(Generator):
                             os.symlink(romDirname, softDir + softList, True)
                             commandArray += [ os.path.splitext(romBasename)[0] ]
 
-                #TI-99 32k RAM expansion & speech modules - enabled by default
-                if system.name == "ti99":
-                    commandArray += [ "-ioport", "peb" ]
-                    if not system.isOptSet("ti99_32kram") or (system.isOptSet("ti99_32kram") and system.getOptBoolean("ti99_32kram")):
-                        commandArray += ["-ioport:peb:slot2", "32kmem"]
-                    if not system.isOptSet("ti99_speech") or (system.isOptSet("ti99_speech") and system.getOptBoolean("ti99_speech")):
-                        commandArray += ["-ioport:peb:slot3", "speech"]
-
+                autoRunCmd = ""
+                autoRunDelay = 0
                 # Autostart computer games where applicable
                 # bbc has different boots for floppy & cassette, no special boot for carts
                 if system.name == "bbc":
                     if system.isOptSet("altromtype") or softList != "":
                         if system.config["altromtype"] == "cass" or softList[-4:] == "cass":
-                            commandArray += [ '-autoboot_delay', '2', '-autoboot_command', '*tape\nchain""\n' ]
+                            autoRunCmd = '*tape\\nchain""\\n'
+                            autoRunDelay = 2
                         elif left(system.config["altromtype"], 4) == "flop" or softList[-4:] == "flop":
-                            commandArray += [ '-autoboot_delay',  '3',  '-autoboot_command', '*cat\n*exec !boot\n' ]
+                            autoRunCmd = '*cat\\n\\n\\n\\n*exec !boot\\n'
+                            autoRunDelay = 3
                     else:
-                        commandArray += [ '-autoboot_delay',  '3',  '-autoboot_command', '*cat\n*exec !boot\n' ]
+                        autoRunCmd = '*cat\\n\\n\\n\\n*exec !boot\\n'
+                        autoRunDelay = 3
                 # fm7 boots floppies, needs cassette loading
                 elif system.name == "fm7":
                     if system.isOptSet("altromtype") or softList != "":
                         if system.config["altromtype"] == "cass" or softList[-4:] == "cass":
-                            commandArray += [ '-autoboot_delay', '5', '-autoboot_command', 'LOADM”“,,R\n' ]
+                            autoRunCmd = 'LOADM”“,,R\\n'
+                            autoRunDelay = 5
                 else:
                     # Check for an override file, otherwise use generic (if it exists)
                     autoRunCmd = messAutoRun[messMode]
@@ -308,8 +341,11 @@ class MameGenerator(Generator):
                             for row in autoRunList:
                                 if row[0].casefold() == os.path.splitext(romBasename)[0].casefold():
                                     autoRunCmd = row[1] + "\\n"
-                    if autoRunCmd != "":
-                        commandArray += [ "-autoboot_delay", "3", "-autoboot_command", autoRunCmd ]
+                                    autoRunDelay = 3
+                if autoRunCmd != "":
+                    if autoRunCmd.startswith("'"):
+                        autoRunCmd.replace("'", "")
+                    commandArray += [ "-autoboot_delay", str(autoRunDelay), "-autoboot_command", autoRunCmd ]
         
         # Alternate D-Pad Mode
         if system.isOptSet("altdpad"):

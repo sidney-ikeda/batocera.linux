@@ -1,6 +1,6 @@
 ################################################################################
 #
-# mupen64plus-next-libretro
+# libretro-mupen64plus-next
 #
 ################################################################################
 # Version: Commits on Feb 8, 2022
@@ -80,6 +80,10 @@ else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_LIBRETECH_H5),y)
 LIBRETRO_MUPEN64PLUS_NEXT_PLATFORM = h5
 
 else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_ORANGEPI_PC),y)
+LIBRETRO_MUPEN64PLUS_NEXT_PLATFORM = armv
+LIBRETRO_MUPEN64PLUS_NEXT_EXTRA_ARGS = ARCH=arm FORCE_GLES=1 WITH_DYNAREC=arm HAVE_NEON=1
+
+else ifeq ($(BR2_PACKAGE_BATOCERA_TARGET_RK3128),y)
 LIBRETRO_MUPEN64PLUS_NEXT_PLATFORM = armv
 LIBRETRO_MUPEN64PLUS_NEXT_EXTRA_ARGS = ARCH=arm FORCE_GLES=1 WITH_DYNAREC=arm HAVE_NEON=1
 

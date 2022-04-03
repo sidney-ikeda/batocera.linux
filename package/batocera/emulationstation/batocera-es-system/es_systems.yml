@@ -861,6 +861,8 @@ xegs:
   hardware: computer
   extensions: [atr, dsk, xfd, bin, rom, car, zip, 7z]
   emulators:
+    libretro:
+      mess: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
     mame:
       mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
   comment_en: |
@@ -1996,7 +1998,7 @@ model3:
   platform: model3, arcade
   emulators:
     supermodel:
-      supermodel: { requireAnyOf: [BR2_PACKAGE_SUPERMODEL] }
+      supermodel: { requireAnyOf: [BR2_PACKAGE_SUPERMODEL, BR2_PACKAGE_SUPERMODEL_RPI4] }
   comment_en: |
     ## SEGA MODEL 3 IMPORTANT INFO ##
 
@@ -2690,6 +2692,21 @@ vgmplay:
           Software lists recommended. QSound can be CPU-intensive.
           Use the File Manager in the MAME menu to change tracks.
 
+superbroswar:
+  name:       Super Mario War
+  manufacturer: Ports
+  release: 2006
+  hardware: port
+  extensions: [game]
+  group: ports
+  emulators:
+    libretro:
+      superbroswar: { requireAnyOf: [BR2_PACKAGE_LIBRETRO_SUPERBROSWAR] }
+  comment_en: |
+    Super Mario War - smash opponents by stomping on them, in a fun multiplayer game.
+  comment_fr: |
+    Super Mario War - écrasez vos adversaires dans ce jeu multijoueurs compétitif.
+
 switch:
   name:       Switch
   manufacturer: Nintendo
@@ -2879,6 +2896,7 @@ macintosh:
           mac601.chd, mac701.chd, and mac755.chd
           lr-minivmac requires MacII.ROM and MacIIx.ROM.
           If booting from a hard drive, floppies may not load at boot. For best results, make a copy of one of the bootable drives, load disks manually via the MAME menu, and copy or install them to the hard drive image.
+          Disk images will only load on Mac IIx and are not bootable.
 
 naomi2:
   name:       Naomi 2
@@ -3095,3 +3113,20 @@ cave3rd:
     You can access the Service Menu using F4 and then use F2 to navigate with F4 to select.
 
     Enjoy Sega Cave CV1000 games under Linux!
+
+pdp1:
+  name:       PDP-1
+  manufacturer: Digital Equipment Corporation
+  release: 1961
+  hardware: computer
+  extensions: [zip, 7z, tap, rim, drm]
+  emulators:
+    libretro:
+      mess:     { requireAnyOf: [BR2_PACKAGE_LIBRETRO_MAME] }
+    mame:
+      mame: { requireAnyOf: [BR2_PACKAGE_MAME] }
+  comment_en: |
+    Use Control-Enter or Start to start after loading. Loading may take some time,
+    if the green lights are blinking, it is loading.
+
+    Spacewar is two player only, if you only have one controller connected, it will control both ships.
